@@ -2,34 +2,53 @@ package com.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.annotation.Input;
-import org.springframework.context.annotation.Bean;
-import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.cloud.stream.annotation.*;
 import org.springframework.messaging.SubscribableChannel;
 
-interface MessageChannels {
+import java.io.Serializable;
 
-    @Input
-    SubscribableChannel input();
-}
-
-@EnableBinding(MessageChannels.class)
+@EnableBinding(ConsumerApplication.Sink.class)
 @SpringBootApplication
 public class ConsumerApplication {
 
-    @Bean
-    IntegrationFlow messageFlow(MessageChannels channels){
-        return IntegrationFlows.from(channels.input())
-                .handle(String.class, ((payload, headers) -> {
-                    System.out.println(payload);
-                    return null;
-                })).get();
+    // Sink application definition
+    @StreamListener(Sink.SAMPLE)
+    public void receive(Person person) {
+        System.out.println("Received message from :  " + person.getFirstName() + " " + person.getLastName());
     }
 
-    void receiveMessage() {
+    public interface Sink {
+        String SAMPLE = "foo";
 
+        @Input(SAMPLE)
+        SubscribableChannel input();
+    }
+
+    static class Person implements Serializable {
+        static final long serialVersionUID = 42L;
+
+        public Person() {
+        }
+
+        public void setFirstName(String firstName) {
+            this.firstName = firstName;
+        }
+
+        public void setLastName(String lastName) {
+            this.lastName = lastName;
+        }
+
+        private String firstName;
+        private String lastName;
+
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public String getLastName() {
+            return lastName;
+        }
     }
 
 
